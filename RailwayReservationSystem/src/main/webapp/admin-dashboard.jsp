@@ -1,0 +1,88 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.railway.model.User" %>
+<%
+    User user = (User) session.getAttribute("user");
+    if (user == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Railway Reservation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f7fafc; }
+        .navbar { background: #667eea; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; margin-left: 20px; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
+        .navbar a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .welcome { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .welcome h2 { color: #333; margin-bottom: 10px; }
+        .admin-badge { background: #f6ad55; color: white; padding: 5px 15px; border-radius: 20px; display: inline-block; margin-left: 10px; font-size: 14px; font-weight: bold; }
+        .user-info { background: #fff5e6; padding: 20px; border-radius: 5px; margin-top: 15px; border-left: 4px solid #f6ad55; }
+        .user-info p { margin: 8px 0; color: #555; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
+        .card h3 { color: #667eea; margin-bottom: 10px; font-size: 18px; }
+        .card p { color: #666; margin-bottom: 15px; font-size: 14px; }
+        .card .icon { font-size: 40px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🚂 Railway Reservation System</h1>
+        <div>
+            <a href="admin-dashboard.jsp">Dashboard</a>
+            <a href="LogoutServlet">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome">
+            <h2>Welcome, <%= user.getFullName() %>! 👋 <span class="admin-badge">ADMIN</span></h2>
+            <p>You have administrator access to the Railway Reservation System</p>
+            
+            <div class="user-info">
+                <p><strong>👤 Username:</strong> <%= user.getUsername() %></p>
+                <p><strong>📧 Email:</strong> <%= user.getEmail() %></p>
+                <p><strong>📱 Phone:</strong> <%= user.getPhone() %></p>
+                <p><strong>🔑 Role:</strong> <%= user.getRole() %></p>
+                <p><strong>📅 Account Created:</strong> <%= user.getCreatedDate() != null ? user.getCreatedDate() : "N/A" %></p>
+            </div>
+        </div>
+        
+        <div class="cards">
+            <div class="card">
+                <div class="icon">🚊</div>
+                <h3>Manage Trains</h3>
+                <p>Add, update, or remove train schedules</p>
+            </div>
+            
+            <div class="card">
+                <div class="icon">👥</div>
+                <h3>View Users</h3>
+                <p>Manage registered users and customers</p>
+            </div>
+            
+            <div class="card">
+                <div class="icon">🎫</div>
+                <h3>All Bookings</h3>
+                <p>View and manage all reservations</p>
+            </div>
+            
+            <div class="card">
+                <div class="icon">📊</div>
+                <h3>Reports</h3>
+                <p>View system statistics and analytics</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
