@@ -21,28 +21,53 @@ public class BookingServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         if(user == null) { response.sendRedirect("login.jsp"); return; }
 
-        // 2. Get Form Data
+        // 2. GET FORM DATA (Updated to get Distance & Class)
         int trainId = Integer.parseInt(request.getParameter("trainId"));
         String dateStr = request.getParameter("date");
-        
-        // --- CHANGED: We get Source/Dest instead of Fare to calculate price ---
-        String source = request.getParameter("source");
-        String destination = request.getParameter("destination");
-
         String passengerName = request.getParameter("passengerName");
         int age = Integer.parseInt(request.getParameter("age"));
         String gender = request.getParameter("gender");
         int seatsToBook = Integer.parseInt(request.getParameter("seats"));
-
-        // 3. CALCULATE LOCAL TRAIN PRICE (10, 20, 25, 30 Rs) 💰
-        double ticketPrice = calculateLocalFare(source, destination);
         
-        // Optional: Half price for kids under 10
-        if(age < 10) {
-            ticketPrice = ticketPrice / 2;
-        }
+        // 🆕 NEW PARAMETERS
+        String trainClass = request.getParameter("trainClass"); // e.g. "1AC", "SL", "GN"
+        
+        // Safety check for distance (default to 0 if missing)
+        String distStr = request.getParameter("distance");
+        int distance = (distStr != null && !distStr.isEmpty()) ? Integer.parseInt(distStr) : 0;
 
-        double totalFare = ticketPrice * seatsToBook;
+
+        // 3. 🧠 HYBRID PRICING LOGIC (10/20 Rs vs AC/Sleeper)
+        double pricePerTicket = 0.0;
+
+        // RULE A: Local / Short Distance Logic
+        if (distance <= 20) {
+            pricePerTicket = 10.0; // Fixed 10 Rs
+        } 
+        else if (distance <= 50) {
+            pricePerTicket = 20.0; // Fixed 20 Rs
+        }
+        else if (distance <= 100 && "GN".equals(trainClass)) {
+            pricePerTicket = 30.0; // Fixed 30 Rs for General short distance
+        }
+        // RULE B: Long Distance / Class Logic
+        else {
+            double ratePerKm = 0.4; // Default General Rate
+            
+            if ("1AC".equals(trainClass)) ratePerKm = 3.5;
+            else if ("2AC".equals(trainClass)) ratePerKm = 2.5;
+            else if ("3AC".equals(trainClass)) ratePerKm = 1.5;
+            else if ("SL".equals(trainClass)) ratePerKm = 0.8;
+            
+            pricePerTicket = distance * ratePerKm;
+            
+            // Optional: Minimum fare rule for luxury classes
+            if("1AC".equals(trainClass) && pricePerTicket < 1000) pricePerTicket = 1000;
+        }
+        
+        // Calculate Total
+        double totalFare = pricePerTicket * seatsToBook;
+
 
         // 4. Check & Update Seat Availability
         TrainDAO trainDAO = new TrainDAO();
@@ -75,34 +100,5 @@ public class BookingServlet extends HttpServlet {
             request.setAttribute("errorMessage", "Booking Failed! Not enough seats available.");
             request.getRequestDispatcher("search-trains.jsp").forward(request, response);
         }
-    }
-
-    // --- NEW HELPER METHOD FOR PRICING ---
-    private double calculateLocalFare(String source, String destination) {
-        if(source == null || destination == null) return 30.0; // Safety check
-        
-        String s = source.toLowerCase();
-        String d = destination.toLowerCase();
-
-        // 10 Rs Route
-        if ((s.contains("mumbai") && d.contains("dadar")) || 
-            (s.contains("delhi") && d.contains("noida"))) {
-            return 10.0;
-        }
-
-        // 20 Rs Route
-        if ((s.contains("mumbai") && d.contains("thane")) || 
-            (s.contains("delhi") && d.contains("gurgaon"))) {
-            return 20.0;
-        }
-
-        // 25 Rs Route
-        if ((s.contains("mumbai") && d.contains("kalyan")) || 
-            (s.contains("chennai") && d.contains("bangalore"))) {
-            return 25.0;
-        }
-
-        // Default for all other routes
-        return 30.0;
     }
 }

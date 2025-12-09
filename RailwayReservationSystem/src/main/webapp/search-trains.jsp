@@ -28,7 +28,7 @@
             </div>
             <div class="form-group">
                 <label>Journey Date</label>
-                <input type="date" name="date" required>
+                <input type="date" name="date" id="journeyDate" required>
             </div>
             <button type="submit" class="btn-search">Search Trains</button>
         </form>
@@ -37,4 +37,10 @@
         </div>
     </div>
 </body>
+<script>
+    // Get today's date in YYYY-MM-DD format
+    var today = new Date().toISOString().split('T')[0];
+    // Set it as the minimum value for the date picker
+    document.getElementsByName("date")[0].setAttribute('min', today);
+</script>
 </html>

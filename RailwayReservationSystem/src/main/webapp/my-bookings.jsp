@@ -73,17 +73,42 @@
                 </div>
 
                 <div class="ticket-status">
-                    <div class="price">₹<%= r.getTotalFare() %></div>
-
-                    <% if("CONFIRMED".equalsIgnoreCase(r.getBookingStatus())) { %>
-                        <span class="status-badge status-confirmed">CONFIRMED</span>
-                    <% } else { %>
-                        <span class="status-badge status-cancelled">CANCELLED</span>
-                    <% } %>
-                    
-                    <br><br>
-                    <small style="color: #718096;">ID: #<%= r.getReservationId() %></small>
-                </div>
+			    <div class="price">₹<%= r.getTotalFare() %></div>
+			
+			    <% 
+			        // 🧠 LOGIC: Check Date vs Today
+			        java.util.Date today = new java.util.Date();
+			        boolean isPastJourney = r.getJourneyDate().before(today);
+			        boolean isCancelled = "CANCELLED".equalsIgnoreCase(r.getBookingStatus());
+			    %>
+			
+			    <% if (isCancelled) { %>
+			        <span class="status-badge status-cancelled">CANCELLED</span>
+			    
+			    <% } else if (isPastJourney) { %>
+			        <span class="status-badge" style="background:#e2e8f0; color:#4a5568;">JOURNEY COMPLETED</span>
+			        <br>
+			        <span style="font-size:10px; color:grey;">(History)</span>
+			
+			    <% } else { %>
+			        <span class="status-badge status-confirmed">CONFIRMED</span>
+			        <br><br>
+			        
+			        <a href="view-ticket.jsp?id=<%= r.getReservationId() %>" target="_blank" 
+			           style="color: blue; text-decoration: underline; font-size: 13px; margin-right: 10px;">
+			           ⬇ Download
+			        </a>
+			
+			        <a href="CancelServlet?id=<%= r.getReservationId() %>" 
+			           onclick="return confirm('Are you sure you want to cancel? Refund will be processed.')"
+			           style="background: #e53e3e; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px;">
+			           ✖ Cancel
+			        </a>
+			    <% } %>
+			    
+			    <br><br>
+			    <small style="color: #718096;">ID: #<%= r.getReservationId() %></small>
+			</div>
             </div>
         <% 
             }

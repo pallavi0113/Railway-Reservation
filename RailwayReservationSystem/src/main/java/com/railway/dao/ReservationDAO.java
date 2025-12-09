@@ -96,48 +96,59 @@ public class ReservationDAO {
         return reservations;
     }
     
-    // 3. Cancel Ticket (Optional Feature)
-    public boolean cancelReservation(int reservationId, int trainId, int seats) {
+ // 3. Cancel Ticket (The "Smart" Version)
+    public boolean cancelTicket(int reservationId) {
         Connection conn = null;
-        PreparedStatement pstmt = null;
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
+        PreparedStatement ps3 = null;
+        ResultSet rs = null;
+        
         try {
             conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); // Start Transaction
+            conn.setAutoCommit(false); // ⚠️ Start Transaction
+
+            // Step 1: Find out which train and how many seats were booked
+            String getSql = "SELECT train_id, seats_booked FROM reservations WHERE reservation_id = ?";
+            ps1 = conn.prepareStatement(getSql);
+            ps1.setInt(1, reservationId);
+            rs = ps1.executeQuery();
             
-            // Step A: Mark as Cancelled
-            String sql1 = "UPDATE reservations SET booking_status = 'CANCELLED' WHERE reservation_id = ?";
-            pstmt = conn.prepareStatement(sql1);
-            pstmt.setInt(1, reservationId);
-            pstmt.executeUpdate();
-            pstmt.close();
-            
-            // Step B: Return seats to the Train
-            String sql2 = "UPDATE trains SET available_seats = available_seats + ? WHERE train_id = ?";
-            pstmt = conn.prepareStatement(sql2);
-            pstmt.setInt(1, seats);
-            pstmt.setInt(2, trainId);
-            pstmt.executeUpdate();
-            
-            conn.commit(); // Commit Transaction
-            return true;
-        } catch (SQLException e) {
-            try {
-                if (conn != null) conn.rollback(); // Undo if error
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+            if (rs.next()) {
+                int trainId = rs.getInt("train_id");
+                int seatsToReturn = rs.getInt("seats_booked");
+
+                // Step 2: Mark the reservation as CANCELLED
+                String updateResSql = "UPDATE reservations SET booking_status = 'CANCELLED' WHERE reservation_id = ?";
+                ps2 = conn.prepareStatement(updateResSql);
+                ps2.setInt(1, reservationId);
+                ps2.executeUpdate();
+
+                // Step 3: Increase the available seats in the train
+                String updateTrainSql = "UPDATE trains SET available_seats = available_seats + ? WHERE train_id = ?";
+                ps3 = conn.prepareStatement(updateTrainSql);
+                ps3.setInt(1, seatsToReturn);
+                ps3.setInt(2, trainId);
+                ps3.executeUpdate();
+
+                conn.commit(); // ✅ Save Everything
+                return true;
+            } else {
+                return false; // Reservation ID not found
             }
+
+        } catch (SQLException e) {
+            try { if(conn!=null) conn.rollback(); } catch(Exception ex){} // Undo if error
             e.printStackTrace();
             return false;
         } finally {
-            try {
-                if (pstmt != null) pstmt.close();
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            try { 
+                if(rs!=null)rs.close(); 
+                if(ps1!=null)ps1.close(); 
+                if(ps2!=null)ps2.close(); 
+                if(ps3!=null)ps3.close(); 
+                if(conn!=null)conn.close(); 
+            } catch(Exception e){}
         }
     }
 }
