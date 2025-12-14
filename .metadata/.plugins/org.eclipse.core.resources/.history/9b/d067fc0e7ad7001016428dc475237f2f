@@ -1,0 +1,285 @@
+package com.railway.dao;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import com.railway.model.Train;
+import com.railway.util.DBConnection;
+
+public class TrainDAO {
+
+    public List<Train> searchTrains(String source, String destination) {
+        List<Train> trains = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = DBConnection.getConnection();
+            
+            // 🧠 CORRECTED LOGIC: Check station_distances for intermediate stops
+            String sql = "SELECT t.* FROM trains t " +
+                         "WHERE t.train_id IN (" +
+                         "    SELECT s1.train_id FROM station_distances s1 " +
+                         "    JOIN station_distances s2 ON s1.train_id = s2.train_id " +
+                         "    WHERE LOWER(s1.station_name) LIKE LOWER(?) " +  // Check Source matches
+                         "    AND LOWER(s2.station_name) LIKE LOWER(?) " +    // Check Destination matches
+                         "    AND s1.km_from_source < s2.km_from_source" +    // Check Direction (Source comes before Dest)
+                         ") AND t.available_seats > 0";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, "%" + source + "%");
+            pstmt.setString(2, "%" + destination + "%");
+            
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Train train = extractTrainFromResultSet(rs);
+                
+                // Calculate Exact Distance for this trip
+                int dist = getRouteDistance(conn, train.getTrainId(), source, destination);
+                train.setJourneyDistance(dist);
+                
+                train.setViaStations(getTrainRoute(conn, train.getTrainId()));
+                
+                trains.add(train);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try { if(rs!=null)rs.close(); if(pstmt!=null)pstmt.close(); if(conn!=null)conn.close(); } catch(Exception e){}
+        }
+        return trains;
+    }
+    
+    // Helper: Calculate KM Distance
+    private int getRouteDistance(Connection conn, int trainId, String src, String dest) {
+        int km1 = 0, km2 = 0;
+        try {
+            PreparedStatement ps = conn.prepareStatement("SELECT km_from_source FROM station_distances WHERE train_id=? AND LOWER(station_name) LIKE LOWER(?)");
+            
+            ps.setInt(1, trainId); ps.setString(2, src);
+            ResultSet rs1 = ps.executeQuery();
+            if(rs1.next()) km1 = rs1.getInt(1);
+            rs1.close(); ps.clearParameters();
+
+            ps.setInt(1, trainId); ps.setString(2, dest);
+            ResultSet rs2 = ps.executeQuery();
+            if(rs2.next()) km2 = rs2.getInt(1);
+            rs2.close(); ps.close();
+
+            if(km1 == 0 && km2 == 0) return 0;
+            return Math.abs(km2 - km1);
+        } catch(Exception e) { return 0; }
+    }
+
+    public Train getTrainById(int trainId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "SELECT * FROM trains WHERE train_id = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, trainId);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return extractTrainFromResultSet(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try { if(rs!=null)rs.close(); if(pstmt!=null)pstmt.close(); if(conn!=null)conn.close(); } catch(Exception e){}
+        }
+        return null;
+    }
+    
+    public boolean updateAvailableSeats(int trainId, int seatsToBook) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "UPDATE trains SET available_seats = available_seats - ? WHERE train_id = ? AND available_seats >= ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, seatsToBook);
+            pstmt.setInt(2, trainId);
+            pstmt.setInt(3, seatsToBook);
+            int result = pstmt.executeUpdate();
+            return result > 0;
+        } catch (SQLException e) {
+            return false;
+        } finally {
+            try { if(pstmt!=null)pstmt.close(); if(conn!=null)conn.close(); } catch(Exception e){}
+        }
+    }
+    
+    private Train extractTrainFromResultSet(ResultSet rs) throws SQLException {
+        Train train = new Train();
+        train.setTrainId(rs.getInt("train_id"));
+        train.setTrainName(rs.getString("train_name"));
+        train.setTrainNumber(rs.getString("train_number"));
+        train.setSourceStation(rs.getString("source_station"));
+        train.setDestinationStation(rs.getString("destination_station"));
+        train.setDepartureTime(rs.getString("departure_time"));
+        train.setArrivalTime(rs.getString("arrival_time"));
+        train.setTotalSeats(rs.getInt("total_seats"));
+        train.setAvailableSeats(rs.getInt("available_seats"));
+        train.setFare(rs.getDouble("fare_general")); // Default display price
+        return train;
+    }
+    
+ // Add this method inside TrainDAO class
+    public boolean addTrain(Train train, int distanceKm) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // Start Transaction
+
+            // 1. Insert into TRAINS table
+            String sql1 = "INSERT INTO trains (train_id, train_name, train_number, source_station, destination_station, " +
+                          "departure_time, arrival_time, total_seats, available_seats, fare_general, fare_sleeper, fare_3ac, fare_2ac, fare_1ac) " +
+                          "VALUES (train_seq.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            // We use 'generatedKeys' to get the new TRAIN_ID immediately
+            pstmt = conn.prepareStatement(sql1, new String[]{"train_id"});
+            pstmt.setString(1, train.getTrainName());
+            pstmt.setString(2, train.getTrainNumber());
+            pstmt.setString(3, train.getSourceStation());
+            pstmt.setString(4, train.getDestinationStation());
+            pstmt.setString(5, train.getDepartureTime());
+            pstmt.setString(6, train.getArrivalTime());
+            pstmt.setInt(7, train.getTotalSeats());
+            pstmt.setInt(8, train.getTotalSeats()); // Available starts equal to Total
+            
+            // Prices (We assume standard multipliers for simplicity if not provided)
+            pstmt.setDouble(9, train.getFare()); // General Base
+            pstmt.setDouble(10, train.getFare() * 2); // Sleeper approx
+            pstmt.setDouble(11, train.getFare() * 3); // 3AC
+            pstmt.setDouble(12, train.getFare() * 4); // 2AC
+            pstmt.setDouble(13, train.getFare() * 6); // 1AC
+            
+            int row = pstmt.executeUpdate();
+            
+            // 2. Get the Generated Train ID
+            long newTrainId = 0;
+            rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                newTrainId = rs.getLong(1);
+            }
+            pstmt.close();
+
+            // 3. Automatically Insert Source & Dest into STATION_DISTANCES
+            // (So the search engine can find this train immediately)
+            String sqlRoute = "INSERT INTO station_distances (distance_id, train_id, station_name, km_from_source) VALUES (dist_seq.NEXTVAL, ?, ?, ?)";
+            pstmt = conn.prepareStatement(sqlRoute);
+            
+            // Insert Source (0 km)
+            pstmt.setLong(1, newTrainId);
+            pstmt.setString(2, train.getSourceStation());
+            pstmt.setInt(3, 0);
+            pstmt.executeUpdate();
+            
+            // Insert Destination (Total Distance)
+            pstmt.setLong(1, newTrainId);
+            pstmt.setString(2, train.getDestinationStation());
+            pstmt.setInt(3, distanceKm);
+            pstmt.executeUpdate();
+
+            conn.commit(); // Save Everything
+            return true;
+
+        } catch (SQLException e) {
+            try { if(conn!=null) conn.rollback(); } catch(Exception ex){}
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { if(pstmt!=null)pstmt.close(); if(conn!=null)conn.close(); } catch(Exception e){}
+        }
+    }
+    
+ // 🆕 HELPER METHOD: Fetches the list of stations (e.g. Kolkata -> Patna -> Delhi)
+    private String getTrainRoute(Connection conn, int trainId) {
+        StringBuilder route = new StringBuilder();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            // Order by Distance so the route is in the correct order
+            String sql = "SELECT station_name FROM station_distances WHERE train_id=? ORDER BY km_from_source";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, trainId);
+            rs = ps.executeQuery();
+            
+            while(rs.next()) {
+                if(route.length() > 0) route.append(" ➝ ");
+                route.append(rs.getString("station_name"));
+            }
+        } catch(Exception e) { 
+            e.printStackTrace(); 
+        } finally {
+            try { if(rs!=null)rs.close(); if(ps!=null)ps.close(); } catch(Exception e){}
+        }
+        
+        return route.toString();
+    }
+    
+ // 1. GET ALL TRAINS (For the Manage List)
+    public List<Train> getAllTrains() {
+        List<Train> list = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "SELECT * FROM trains ORDER BY train_id DESC";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(extractTrainFromResultSet(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+        return list;
+    }
+
+    // 2. DELETE TRAIN
+    public boolean deleteTrain(int id) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            // First delete dependent routes to avoid foreign key errors
+            PreparedStatement ps1 = conn.prepareStatement("DELETE FROM station_distances WHERE train_id=?");
+            ps1.setInt(1, id);
+            ps1.executeUpdate();
+            
+            // Then delete the train
+            PreparedStatement ps2 = conn.prepareStatement("DELETE FROM trains WHERE train_id=?");
+            ps2.setInt(1, id);
+            int rows = ps2.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+    }
+
+    // 3. UPDATE TRAIN (Edit Name, Time, Route)
+    public boolean updateTrain(Train t) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "UPDATE trains SET train_name=?, train_number=?, source_station=?, destination_station=?, " +
+                         "departure_time=?, arrival_time=?, total_seats=?, fare_general=? WHERE train_id=?";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, t.getTrainName());
+            ps.setString(2, t.getTrainNumber());
+            ps.setString(3, t.getSourceStation());
+            ps.setString(4, t.getDestinationStation());
+            ps.setString(5, t.getDepartureTime());
+            ps.setString(6, t.getArrivalTime());
+            ps.setInt(7, t.getTotalSeats());
+            ps.setDouble(8, t.getFare());
+            ps.setInt(9, t.getTrainId()); // ID is used to find which row to update
+            
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+    }
+}

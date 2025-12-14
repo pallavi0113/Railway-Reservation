@@ -1,0 +1,72 @@
+package com.railway.servlet;
+
+import java.io.IOException;
+import java.util.Date;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+import com.railway.dao.ReservationDAO;
+import com.railway.dao.TrainDAO;
+import com.railway.model.Reservation;
+import com.railway.model.User;
+
+@WebServlet("/BookingServlet")
+public class BookingServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // 1. Get User from Session
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+        if(user == null) { response.sendRedirect("login.jsp"); return; }
+
+        // 2. Get Form Data
+        int trainId = Integer.parseInt(request.getParameter("trainId"));
+        String dateStr = request.getParameter("date");
+        double fare = Double.parseDouble(request.getParameter("fare"));
+        
+        String passengerName = request.getParameter("passengerName");
+        int age = Integer.parseInt(request.getParameter("age"));
+        String gender = request.getParameter("gender");
+        int seatsToBook = Integer.parseInt(request.getParameter("seats"));
+
+        // 3. CALCULATE TOTAL PRICE 💰
+        double totalFare = fare * seatsToBook;
+
+        // 4. Check & Update Seat Availability
+        TrainDAO trainDAO = new TrainDAO();
+        boolean seatsUpdated = trainDAO.updateAvailableSeats(trainId, seatsToBook);
+
+        if (seatsUpdated) {
+            // 5. Create Reservation Object
+            Reservation res = new Reservation();
+            res.setUserId(user.getUserId());
+            res.setTrainId(trainId);
+            res.setPassengerName(passengerName);
+            res.setAge(age);
+            res.setGender(gender);
+            res.setJourneyDate(java.sql.Date.valueOf(dateStr)); // Convert String to Date
+            res.setSeatsBooked(seatsToBook);
+            res.setTotalFare(totalFare);
+            res.setBookingStatus("CONFIRMED");
+            
+            // 6. Save to Database
+            ReservationDAO bookingDAO = new ReservationDAO();
+            boolean booked = bookingDAO.bookTicket(res);
+            
+            if (booked) {
+                // Success! Send data to the success page
+                request.setAttribute("reservation", res);
+                request.getRequestDispatcher("booking-success.jsp").forward(request, response);
+            } else {
+                response.getWriter().println("Error: Database insertion failed.");
+            }
+        } else {
+            // Not enough seats available
+            request.setAttribute("errorMessage", "Booking Failed! Not enough seats available.");
+            request.getRequestDispatcher("search-trains.jsp").forward(request, response);
+        }
+    }
+}

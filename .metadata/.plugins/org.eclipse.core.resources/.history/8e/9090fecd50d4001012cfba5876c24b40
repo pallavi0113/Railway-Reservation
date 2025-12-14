@@ -1,0 +1,81 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.railway.model.User" %>
+<%
+    User user = (User) session.getAttribute("user");
+    if (user == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Railway Reservation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f7fafc; }
+        .navbar { background: #667eea; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar h1 { font-size: 24px; }
+        .navbar a { color: white; text-decoration: none; margin-left: 20px; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
+        .navbar a:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .welcome { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .welcome h2 { color: #333; margin-bottom: 10px; }
+        .user-info { background: #f7fafc; padding: 15px; border-radius: 5px; margin-top: 15px; }
+        .user-info p { margin: 5px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🚂 Railway Reservation System</h1>
+        <div>
+            <a href="user-dashboard.jsp">Dashboard</a>
+            <a href="LogoutServlet">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome">
+            <h2>Welcome, <%= user.getFullName() %>! 👋</h2>
+            <p>You have successfully logged in to the Railway Reservation System</p>
+            
+            <div class="user-info">
+                <p><strong>Username:</strong> <%= user.getUsername() %></p>
+                <p><strong>Email:</strong> <%= user.getEmail() %></p>
+                <p><strong>Phone:</strong> <%= user.getPhone() %></p>
+                <p><strong>Role:</strong> <%= user.getRole() %></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+---
+
+## **Now Let's Run and Test!**
+
+### **Step 1: Deploy Project to Tomcat**
+
+1. Right-click on **Tomcat v9.0 Server** in the **Servers** tab (bottom panel)
+2. Select **Add and Remove...**
+3. Move **RailwayReservationSystem** from Available to Configured
+4. Click **Finish**
+
+### **Step 2: Start Tomcat Server**
+
+1. Right-click on **Tomcat v9.0 Server**
+2. Click **Start**
+3. Wait for console message: **"Server startup in [xxxx] milliseconds"**
+
+### **Step 3: Access Your Application**
+
+Open your browser and go to:
+```
+http://localhost:8080/RailwayReservationSystem/
+```
+
+Or directly to login:
+```
+http://localhost:8080/RailwayReservationSystem/login.jsp

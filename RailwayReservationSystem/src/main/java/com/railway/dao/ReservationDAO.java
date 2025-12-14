@@ -151,4 +151,43 @@ public class ReservationDAO {
             } catch(Exception e){}
         }
     }
+    
+ // 4. ADMIN: Get ALL Reservations
+    public List<Reservation> getAllReservations() {
+        List<Reservation> list = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            // Order by newest bookings first
+            String sql = "SELECT r.*, t.train_name, t.train_number, t.source_station, t.destination_station " +
+                         "FROM reservations r " +
+                         "JOIN trains t ON r.train_id = t.train_id " +
+                         "ORDER BY r.booking_date DESC";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Reservation res = new Reservation();
+                res.setReservationId(rs.getInt("reservation_id"));
+                res.setUserId(rs.getInt("user_id")); // Admin needs to see WHO booked it
+                res.setPassengerName(rs.getString("passenger_name"));
+                res.setJourneyDate(rs.getDate("journey_date"));
+                res.setSeatsBooked(rs.getInt("seats_booked"));
+                res.setTotalFare(rs.getDouble("total_fare"));
+                res.setBookingStatus(rs.getString("booking_status"));
+                res.setBookingDate(rs.getDate("booking_date"));
+                
+                // Train Details
+                res.setTrainName(rs.getString("train_name"));
+                res.setTrainNumber(rs.getString("train_number"));
+                res.setSourceStation(rs.getString("source_station"));
+                res.setDestinationStation(rs.getString("destination_station"));
+                
+                list.add(res);
+            }
+        } catch (Exception e) { e.printStackTrace(); } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+        return list;
+    }
 }

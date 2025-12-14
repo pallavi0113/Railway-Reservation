@@ -1,0 +1,14 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.railway.dao.ReservationDAO, com.railway.model.Reservation, java.util.List" %>
+<%
+    // Fetch the specific reservation logic
+    int resId = Integer.parseInt(request.getParameter("id"));
+    ReservationDAO dao = new ReservationDAO();
+    // (Ideally you should have a getReservationById method, but for now we reuse getUserReservations)
+    // This is a quick hack for the student project level:
+    List<Reservation> list = dao.getUserReservations(((com.railway.model.User)session.getAttribute("user")).getUserId());
+    Reservation res = null;
+    for(Reservation r : list) {
+        if(r.getReservationId() == resId) { res = r; break; }
+    }
+%>

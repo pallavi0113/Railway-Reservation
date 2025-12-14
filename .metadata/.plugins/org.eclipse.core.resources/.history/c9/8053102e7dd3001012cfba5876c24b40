@@ -1,0 +1,5 @@
+package com.railway.dao;
+
+public class TrainDAO {
+
+}

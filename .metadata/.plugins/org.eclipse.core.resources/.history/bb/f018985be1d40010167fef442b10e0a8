@@ -1,0 +1,77 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.railway.dao.TrainDAO, com.railway.model.Train, com.railway.model.User" %>
+<%
+    // Security: Check Login
+    User user = (User) session.getAttribute("user");
+    if(user == null) { response.sendRedirect("login.jsp"); return; }
+
+    // Get Data from URL
+    String trainIdStr = request.getParameter("trainId");
+    String date = request.getParameter("date");
+    
+    // Fetch Train Details to show on top
+    TrainDAO dao = new TrainDAO();
+    Train train = dao.getTrainById(Integer.parseInt(trainIdStr));
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Ticket</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f7fafc; display: flex; justify-content: center; padding-top: 30px; }
+        .booking-container { background: white; padding: 40px; border-radius: 10px; width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .summary { background: #ebf8ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #4299e1; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 5px; }
+        .btn-confirm { width: 100%; padding: 12px; background: #ed8936; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 5px; }
+        .btn-confirm:hover { background: #dd6b20; }
+    </style>
+</head>
+<body>
+    <div class="booking-container">
+        <h2 style="text-align: center;">🎟️ Book Your Ticket</h2>
+        
+        <div class="summary">
+            <strong>Train:</strong> <%= train.getTrainName() %> (<%= train.getTrainNumber() %>)<br>
+            <strong>Route:</strong> <%= train.getSourceStation() %> ➝ <%= train.getDestinationStation() %><br>
+            <strong>Date:</strong> <%= date %><br>
+            <strong>Fare per seat:</strong> ₹<%= train.getFare() %>
+        </div>
+
+        <form action="BookingServlet" method="post">
+		    <input type="hidden" name="trainId" value="<%= train.getTrainId() %>">
+		    <input type="hidden" name="date" value="<%= date %>">
+		
+		    <input type="hidden" name="source" value="<%= train.getSourceStation() %>">
+		    <input type="hidden" name="destination" value="<%= train.getDestinationStation() %>">
+		
+		    <div class="form-group">
+		        <label>Passenger Name</label>
+		        <input type="text" name="passengerName" placeholder="Enter full name" required>
+		    </div>
+		    
+		    <div class="form-group">
+		        <label>Age</label>
+		        <input type="number" name="age" min="1" max="120" required>
+		    </div>
+		
+		    <div class="form-group">
+		        <label>Gender</label>
+		        <select name="gender">
+		            <option value="Male">Male</option>
+		            <option value="Female">Female</option>
+		            <option value="Other">Other</option>
+		        </select>
+		    </div>
+		
+		    <div class="form-group">
+		        <label>Number of Seats</label>
+		        <input type="number" name="seats" value="1" min="1" max="6" required>
+		    </div>
+		
+		    <button type="submit" class="btn-confirm">Confirm & Pay</button>
+	</form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+127.0.0.1 - - [07/Dec/2025:20:47:58 +0530] "GET / HTTP/1.1" 404 752
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:20:50:07 +0530] "GET /RailwayReservationSystem/ HTTP/1.1" 200 1846
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:20:50:07 +0530] "GET /favicon.ico HTTP/1.1" 404 763
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:20:50:14 +0530] "GET /RailwayReservationSystem/login.jsp HTTP/1.1" 200 2317
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:20:50:36 +0530] "POST /RailwayReservationSystem/LoginServlet HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:20:50:36 +0530] "GET /RailwayReservationSystem/admin-dashboard.jsp HTTP/1.1" 404 750
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:31:34 +0530] "GET /RailwayReservationSystem/login.jsp HTTP/1.1" 200 2317
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:31:42 +0530] "POST /RailwayReservationSystem/LoginServlet HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:31:42 +0530] "GET /RailwayReservationSystem/admin-dashboard.jsp HTTP/1.1" 404 750
+127.0.0.1 - - [07/Dec/2025:21:37:47 +0530] "GET / HTTP/1.1" 404 752
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:38:12 +0530] "GET /RailwayReservationSystem/ HTTP/1.1" 200 1846
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:38:18 +0530] "GET /RailwayReservationSystem/login.jsp HTTP/1.1" 200 2317
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:38:34 +0530] "POST /RailwayReservationSystem/LoginServlet HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:38:34 +0530] "GET /RailwayReservationSystem/admin-dashboard.jsp HTTP/1.1" 404 750
+0:0:0:0:0:0:0:1 - - [07/Dec/2025:21:38:56 +0530] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 808

@@ -1,0 +1,83 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List, com.railway.model.Reservation" %>
+<%@ include file="navbar.jsp" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Bookings (Admin)</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f7fafc; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #ed8936; }
+        h2 { text-align: center; color: #2d3748; margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #ed8936; color: white; }
+        tr:hover { background-color: #fffaf0; }
+        
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge-conf { background: #c6f6d5; color: #22543d; } /* Green */
+        .badge-can { background: #fed7d7; color: #822727; }  /* Red */
+        
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #718096; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🎫 All Passenger Reservations</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>PNR ID</th>
+                    <th>User ID</th>
+                    <th>Train Info</th>
+                    <th>Passenger</th>
+                    <th>Journey Date</th>
+                    <th>Seats</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% 
+                    List<Reservation> list = (List<Reservation>) request.getAttribute("bookingList");
+                    if (list != null && !list.isEmpty()) {
+                        for (Reservation r : list) {
+                %>
+                <tr>
+                    <td>#<%= r.getReservationId() %></td>
+                    <td>User <%= r.getUserId() %></td>
+                    <td>
+                        <strong><%= r.getTrainName() %></strong><br>
+                        <span style="color:grey; font-size:12px;"><%= r.getSourceStation() %> ➝ <%= r.getDestinationStation() %></span>
+                    </td>
+                    <td><%= r.getPassengerName() %></td>
+                    <td><%= r.getJourneyDate() %></td>
+                    <td><%= r.getSeatsBooked() %></td>
+                    <td>₹<%= r.getTotalFare() %></td>
+                    <td>
+                        <% if("CONFIRMED".equalsIgnoreCase(r.getBookingStatus())) { %>
+                            <span class="badge badge-conf">CONFIRMED</span>
+                        <% } else { %>
+                            <span class="badge badge-can">CANCELLED</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <% 
+                        }
+                    } else {
+                %>
+                <tr>
+                    <td colspan="8" style="text-align:center; padding: 20px;">No bookings found yet.</td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+        
+        <a href="admin-dashboard.jsp" class="back-btn">← Back to Dashboard</a>
+    </div>
+
+</body>
+</html>

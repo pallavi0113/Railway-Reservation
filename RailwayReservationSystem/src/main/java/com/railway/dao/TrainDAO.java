@@ -1,9 +1,11 @@
 package com.railway.dao;
 
 import java.sql.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import com.railway.model.Train;
+import com.railway.model.StationStop;
 import com.railway.util.DBConnection;
 
 public class TrainDAO {
@@ -220,5 +222,117 @@ public class TrainDAO {
         }
         
         return route.toString();
+    }
+    
+ // 1. GET ALL TRAINS (For the Manage List)
+    public List<Train> getAllTrains() {
+        List<Train> list = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "SELECT * FROM trains ORDER BY train_id DESC";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(extractTrainFromResultSet(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+        return list;
+    }
+
+    // 2. DELETE TRAIN
+    public boolean deleteTrain(int id) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            // First delete dependent routes to avoid foreign key errors
+            PreparedStatement ps1 = conn.prepareStatement("DELETE FROM station_distances WHERE train_id=?");
+            ps1.setInt(1, id);
+            ps1.executeUpdate();
+            
+            // Then delete the train
+            PreparedStatement ps2 = conn.prepareStatement("DELETE FROM trains WHERE train_id=?");
+            ps2.setInt(1, id);
+            int rows = ps2.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+    }
+
+    // 3. UPDATE TRAIN (Edit Name, Time, Route)
+    public boolean updateTrain(Train t) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "UPDATE trains SET train_name=?, train_number=?, source_station=?, destination_station=?, " +
+                         "departure_time=?, arrival_time=?, total_seats=?, fare_general=? WHERE train_id=?";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, t.getTrainName());
+            ps.setString(2, t.getTrainNumber());
+            ps.setString(3, t.getSourceStation());
+            ps.setString(4, t.getDestinationStation());
+            ps.setString(5, t.getDepartureTime());
+            ps.setString(6, t.getArrivalTime());
+            ps.setInt(7, t.getTotalSeats());
+            ps.setDouble(8, t.getFare());
+            ps.setInt(9, t.getTrainId()); // ID is used to find which row to update
+            
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+    }
+    
+ // 5. GET ALL STOPS FOR A TRAIN (Ordered by Distance)
+    public List<StationStop> getTrainStops(int trainId) {
+        List<StationStop> list = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "SELECT * FROM station_distances WHERE train_id=? ORDER BY km_from_source ASC";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, trainId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new StationStop(
+                    rs.getInt("distance_id"),
+                    rs.getString("station_name"),
+                    rs.getInt("km_from_source")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+        return list;
+    }
+
+    // 6. ADD A NEW STOP (Intermediate Station)
+    public boolean addStation(int trainId, String stationName, int km) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "INSERT INTO station_distances (distance_id, train_id, station_name, km_from_source) VALUES (dist_seq.NEXTVAL, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, trainId);
+            ps.setString(2, stationName);
+            ps.setInt(3, km);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
+    }
+    
+    // 7. DELETE A STOP
+    public boolean deleteStation(int distanceId) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            String sql = "DELETE FROM station_distances WHERE distance_id=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, distanceId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { return false; } 
+        finally { try { if(conn!=null)conn.close(); } catch(Exception e){} }
     }
 }

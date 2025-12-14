@@ -1,0 +1,11 @@
+127.0.0.1 - - [13/Dec/2025:00:04:09 +0530] "GET / HTTP/1.1" 404 752
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:21 +0530] "GET /RailwayReservationSystem/ HTTP/1.1" 200 2006
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:23 +0530] "GET /RailwayReservationSystem/login.jsp HTTP/1.1" 200 2465
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:31 +0530] "POST /RailwayReservationSystem/LoginServlet HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:31 +0530] "GET /RailwayReservationSystem/admin-dashboard.jsp HTTP/1.1" 200 4464
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:45 +0530] "GET /RailwayReservationSystem/ManageTrainServlet HTTP/1.1" 200 10499
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:52 +0530] "GET /RailwayReservationSystem/add-train.jsp HTTP/1.1" 200 5669
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:04:57 +0530] "GET /RailwayReservationSystem/AllBookingsServlet HTTP/1.1" 200 8045
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:05:22 +0530] "POST /RailwayReservationSystem/LoginServlet HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:05:22 +0530] "GET /RailwayReservationSystem/user-dashboard.jsp HTTP/1.1" 200 4011
+0:0:0:0:0:0:0:1 - - [13/Dec/2025:00:05:23 +0530] "GET /RailwayReservationSystem/search-trains.jsp HTTP/1.1" 200 4465

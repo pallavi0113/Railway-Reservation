@@ -1,0 +1,9 @@
+package com.railway.model;
+
+public class Snippet {
+	INSERT INTO trains VALUES (train_seq.NEXTVAL, 'Duronto Express', 'DR003', 'Kolkata Howrah', 'New Delhi', '20:00', '14:00', 120, 120, 2000.00);
+	INSERT INTO trains VALUES (train_seq.NEXTVAL, 'Gatimaan Express', 'GT004', 'Hazrat Nizamuddin', 'Agra Cantt', '08:10', '09:50', 180, 180, 750.00);
+	INSERT INTO trains VALUES (train_seq.NEXTVAL, 'Vande Bharat Express', 'VB005', 'Mumbai Central', 'Ahmedabad', '06:25', '12:55', 200, 200, 1200.00);
+	INSERT INTO trains VALUES (train_seq.NEXTVAL, 'Tejas Express', 'TJ006', 'Mumbai CST', 'Goa Karmali', '05:00', '13:45', 140, 140, 1100.00);
+}
+

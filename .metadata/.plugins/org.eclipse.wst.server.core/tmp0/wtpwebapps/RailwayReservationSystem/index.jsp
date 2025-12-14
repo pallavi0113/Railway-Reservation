@@ -1,0 +1,38 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Reservation System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 500px; width: 90%; text-align: center; }
+        h1 { color: #333; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .btn { display: inline-block; padding: 12px 30px; margin: 10px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #764ba2; transform: translateY(-2px); }
+        .features { margin-top: 30px; text-align: left; }
+        .feature { padding: 10px; margin: 10px 0; background: #f7fafc; border-left: 4px solid #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚂 Railway Reservation System</h1>
+        <p class="subtitle">Book your train tickets online with ease</p>
+        
+        <div style="margin-bottom: 20px;">
+            <a href="login.jsp" class="btn">Login</a>
+            <a href="register.jsp" class="btn" style="background: white; color: #667eea; border: 2px solid #667eea;">Register</a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">✓ Search trains by source and destination</div>
+            <div class="feature">✓ Real-time seat availability</div>
+            <div class="feature">✓ Instant booking confirmation</div>
+            <div class="feature">✓ View and manage your bookings</div>
+        </div>
+    </div>
+</body>
+</html>
